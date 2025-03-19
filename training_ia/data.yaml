@@ -1,0 +1,7 @@
+train: C:/Users/peron/fiftyone/open-images-v7-YOLOformat/images/train
+val: C:/Users/peron/fiftyone/open-images-v7-YOLOformat/images/validation
+test: C:/Users/peron/fiftyone/open-images-v7-YOLOformat/images/test
+
+
+nc: 1  # Nombre de classes
+names: ["Billboard"]
