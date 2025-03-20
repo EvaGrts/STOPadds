@@ -62,20 +62,33 @@ class VideoProcessor:
             output = np.empty(input_shape, dtype=np.float32)
             cuda.memcpy_dtoh(output, d_output)
             
-            return output.squeeze()
+            #return output.squeeze()
 
         else:
             # Inférence avec ONNX
             input_name = self.model.get_inputs()[0].name
             output_name = self.model.get_outputs()[0].name
             output = self.model.run([output_name], {input_name: frame_input})[0]
-            bbox_preds = output[0][:, 4:0]
-            confidences = output[0][:, :4]
+            confidences = output[0][4, :]
+            bboxes=output[0][0:4,:]
 
-            for confidence in confidences:
-                if confidence > 0.25:
-                    print(confidence)
-            return output.squeeze()
+            sorted_indices = confidences.argsort()[::-1]
+            confidences = confidences[sorted_indices]
+            bboxes = bboxes[:, sorted_indices]
+
+
+            if(confidences[0]>0.25):
+                print(confidences[0])
+                x_center, y_center, width, height = bboxes[:, 0]
+                x_min=int(x_center - width/2)
+                x_max=int(x_center + width/2)
+                y_min=int(y_center - height/2)
+                y_max=int(y_center + height/2)
+                # rectangle vert
+                cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
+
+
+            return frame
 
     def process_video(self):
         """Traite une vidéo image par image avec TensorRT ou ONNX"""
@@ -102,7 +115,6 @@ class VideoProcessor:
                 break
 
             processed_frame = self.infer_frame(frame)  # 🔹 Inférence sur l'image
-            processed_frame = (processed_frame * 255).astype(np.uint8)  # Convertir en image
             out.write(processed_frame)
 
         cap.release()
