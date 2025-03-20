@@ -98,7 +98,7 @@ class VideoProcessingApp(QWidget):
         if not self.video_path:
             self.metrics_text.append("Aucune vidéo sélectionnée !")
             return
-        video_processor=VideoProcessor(self.video_path,"model/best.onnx","model/best.engine","output/output.mp4")
+        video_processor=VideoProcessor(self.video_path,"model/best.onnx","model/best.engine","output/output.mp4",0.25)
         video_processor.process_video()
 
         #self.processed_video_path = "output/output.mp4"

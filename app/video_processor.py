@@ -7,22 +7,27 @@ import pycuda.driver as cuda
 import pycuda.autoinit
 import torch  # Pour détecter le GPU
 
+
+
+
 class VideoProcessor:
-    def __init__(self, video_path, onnx_model_path, engine_model_path, output_path):
+    def __init__(self, video_path, onnx_model_path, engine_model_path, output_path,detection_thresh):
         self.video_path = video_path
         self.onnx_model_path = onnx_model_path
         self.engine_model_path = engine_model_path
         self.output_path = output_path
+        self.detection_thresh=detection_thresh
         self.metrics_text = []
-        # self.use_tensorrt = torch.cuda.is_available()  # Vérifie si un GPU est dispo
+        #self.use_tensorrt = torch.cuda.is_available()  # Vérifie si un GPU est dispo
         self.use_tensorrt = False
         self.model = self.load_model()
-
     def load_model(self):
         """Charge le bon modèle selon la présence d'un GPU"""
         if self.use_tensorrt:
+            print("TensorRT")
             return self.load_tensorrt_model()
         else:
+            print("ONNX")
             return self.load_onnx_model()
 
     def load_tensorrt_model(self):
@@ -37,10 +42,10 @@ class VideoProcessor:
 
     def preprocess_frame(self, frame):
         """Prépare une image pour l'inférence"""
-        frame_resized = cv2.resize(frame, (640, 640))  # Modifier selon ton modèle
+        frame_resized = cv2.resize(frame, (640, 640))  
         frame_normalized = frame_resized.astype(np.float32) / 255.0
-        frame_transposed = np.transpose(frame_normalized, (2, 0, 1))  # (HWC) → (CHW)
-        return np.expand_dims(frame_transposed, axis=0).astype(np.float32)  # (1, C, H, W)
+        frame_transposed = np.transpose(frame_normalized, (2, 0, 1))  
+        return np.expand_dims(frame_transposed, axis=0).astype(np.float32) 
 
     def infer_frame(self, frame):
         """Effectue l'inférence sur une frame"""
@@ -48,6 +53,7 @@ class VideoProcessor:
        
         if self.use_tensorrt:
             # Inférence avec TensorRT
+            
             context = self.model.create_execution_context()
             input_shape = frame_input.shape
             input_size = np.prod(input_shape) * np.dtype(np.float32).itemsize
@@ -66,28 +72,30 @@ class VideoProcessor:
 
         else:
             # Inférence avec ONNX
+            
             input_name = self.model.get_inputs()[0].name
             output_name = self.model.get_outputs()[0].name
             output = self.model.run([output_name], {input_name: frame_input})[0]
-            confidences = output[0][4, :]
-            bboxes=output[0][0:4,:]
 
-            sorted_indices = confidences.argsort()[::-1]
-            confidences = confidences[sorted_indices]
-            bboxes = bboxes[:, sorted_indices]
+        confidences = output[0][4, :]
+        bboxes=output[0][0:4,:]
 
+        sorted_indices = confidences.argsort()[::-1]
+        confidences = confidences[sorted_indices]
+        bboxes = bboxes[:, sorted_indices]
+        #for i,confidence in enumerate(confidences):
+        if(confidences[0]>self.detection_thresh):
+            x_center, y_center, width, height = bboxes[:, 0]
+            x_min=int((x_center - width/2)*self.width_ratio)
+            x_max=int((x_center + width/2)*self.width_ratio)
+            y_min=int((y_center - height/2)*self.height_ratio)
+            y_max=int((y_center + height/2)*self.height_ratio)
+            # rectangle vert
+            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), -1)
+            cv2.putText(frame, f"Billboard ({confidences[0]:.2f})", 
+                        (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
-            if(confidences[0]>0.25):
-                print(confidences[0])
-                x_center, y_center, width, height = bboxes[:, 0]
-                x_min=int(x_center - width/2)
-                x_max=int(x_center + width/2)
-                y_min=int(y_center - height/2)
-                y_max=int(y_center + height/2)
-                # rectangle vert
-                cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), 2)
-
-
+            
             return frame
 
     def process_video(self):
@@ -106,6 +114,8 @@ class VideoProcessor:
         fps = int(cap.get(cv2.CAP_PROP_FPS))
         width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+        self.width_ratio=width/640
+        self.height_ratio=height/640
         fourcc = cv2.VideoWriter_fourcc(*'mp4v')
         out = cv2.VideoWriter(self.output_path, fourcc, fps, (width, height))
 
