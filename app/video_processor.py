@@ -71,23 +71,23 @@ class VideoProcessor:
             output_name = self.model.get_outputs()[0].name
             output = self.model.run([output_name], {input_name: frame_input})[0]
 
-        confidences = output[0][4, :]
-        bboxes=output[0][0:4,:]
+            confidences = output[0][4, :]
+            bboxes=output[0][0:4,:]
 
-        sorted_indices = confidences.argsort()[::-1]
-        confidences = confidences[sorted_indices]
-        bboxes = bboxes[:, sorted_indices]
-        #for i,confidence in enumerate(confidences):
-        if(confidences[0]>self.detection_thresh):
-            x_center, y_center, width, height = bboxes[:, 0]
-            x_min=int((x_center - width/2)*self.width_ratio)
-            x_max=int((x_center + width/2)*self.width_ratio)
-            y_min=int((y_center - height/2)*self.height_ratio)
-            y_max=int((y_center + height/2)*self.height_ratio)
-            # rectangle vert
-            cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), -1)
-            cv2.putText(frame, f"Billboard ({confidences[0]:.2f})", 
-                        (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
+            sorted_indices = confidences.argsort()[::-1]
+            confidences = confidences[sorted_indices]
+            bboxes = bboxes[:, sorted_indices]
+            #for i,confidence in enumerate(confidences):
+            if(confidences[0]>self.detection_thresh):
+                x_center, y_center, width, height = bboxes[:, 0]
+                x_min=int((x_center - width/2)*self.width_ratio)
+                x_max=int((x_center + width/2)*self.width_ratio)
+                y_min=int((y_center - height/2)*self.height_ratio)
+                y_max=int((y_center + height/2)*self.height_ratio)
+                # rectangle vert
+                cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), -1)
+                cv2.putText(frame, f"Billboard ({confidences[0]:.2f})", 
+                            (x_min, y_min - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
             
             return frame
