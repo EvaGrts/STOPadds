@@ -2,13 +2,10 @@ import cv2
 import os
 import numpy as np
 import onnxruntime as ort
-import tensorrt as trt
-import pycuda.driver as cuda
-import pycuda.autoinit
-import torch  # Pour détecter le GPU
-
-
-
+#import tensorrt as trt
+#import pycuda.driver as cuda
+#import pycuda.autoinit
+#import torch  # Pour détecter le GPU
 
 class VideoProcessor:
     def __init__(self, video_path, onnx_model_path, engine_model_path, output_path,detection_thresh):
@@ -32,13 +29,13 @@ class VideoProcessor:
 
     def load_tensorrt_model(self):
         """Charge un modèle TensorRT"""
-        TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
-        with open(self.engine_model_path, "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
-            return runtime.deserialize_cuda_engine(f.read())
+        #TRT_LOGGER = trt.Logger(trt.Logger.WARNING)
+        #with open(self.engine_model_path, "rb") as f, trt.Runtime(TRT_LOGGER) as runtime:
+        #    return runtime.deserialize_cuda_engine(f.read())
 
     def load_onnx_model(self):
         """Charge un modèle ONNX"""
-        return ort.InferenceSession(self.onnx_model_path, providers=['CUDAExecutionProvider'] if self.use_tensorrt else ['CPUExecutionProvider'])
+        return ort.InferenceSession(self.onnx_model_path, providers=['CPUExecutionProvider'])
 
     def preprocess_frame(self, frame):
         """Prépare une image pour l'inférence"""
@@ -52,24 +49,21 @@ class VideoProcessor:
         frame_input = self.preprocess_frame(frame)
        
         if self.use_tensorrt:
-            # Inférence avec TensorRT
-            
-            context = self.model.create_execution_context()
-            input_shape = frame_input.shape
-            input_size = np.prod(input_shape) * np.dtype(np.float32).itemsize
+        #     # Inférence avec TensorRT
+            print("TODO")
+        #     context = self.model.create_execution_context()
+        #     input_shape = frame_input.shape
+        #     input_size = np.prod(input_shape) * np.dtype(np.float32).itemsize
 
-            d_input = cuda.mem_alloc(input_size)
-            d_output = cuda.mem_alloc(input_size)
-            bindings = [int(d_input), int(d_output)]
+        #     d_input = cuda.mem_alloc(input_size)
+        #     d_output = cuda.mem_alloc(input_size)
+        #     bindings = [int(d_input), int(d_output)]
 
-            cuda.memcpy_htod(d_input, frame_input)
-            context.execute_v2(bindings)
+        #     cuda.memcpy_htod(d_input, frame_input)
+        #     context.execute_v2(bindings)
 
-            output = np.empty(input_shape, dtype=np.float32)
-            cuda.memcpy_dtoh(output, d_output)
-            
-            #return output.squeeze()
-
+        #     output = np.empty(input_shape, dtype=np.float32)
+        #     cuda.memcpy_dtoh(output, d_output)
         else:
             # Inférence avec ONNX
             

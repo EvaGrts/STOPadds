@@ -101,7 +101,7 @@ class VideoProcessingApp(QWidget):
         video_processor=VideoProcessor(self.video_path,"model/best.onnx","model/best.engine","output/output.mp4",0.25)
         video_processor.process_video()
 
-        #self.processed_video_path = "output/output.mp4"
+
         #self.metrics_text.append(f"Vidéo traitée disponible : {self.processed_video_path}")
 
         

@@ -11,6 +11,6 @@ if __name__ == '__main__':
     metrics = model.val()
  
     #Export format TensorRT pour gpu
-    model.export(format="engine")
-    #Export format ONNX pour cpu
+    #model.export(format="engine")
+    #Export format ONNX 
     model.export(format="onnx")
