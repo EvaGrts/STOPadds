@@ -44,7 +44,7 @@ class VideoProcessingApp(QWidget):
         self.process_btn.clicked.connect(self.process_video)
         left_layout.addWidget(self.process_btn)
         
-        self.show_original = QCheckBox("🎞️ Afficher vidéo originale")
+        self.show_original = QCheckBox("🎞️ Afficher vidéo traitée")
         self.show_original.stateChanged.connect(self.toggle_video)
         left_layout.addWidget(self.show_original)
         
@@ -101,17 +101,18 @@ class VideoProcessingApp(QWidget):
         video_processor=VideoProcessor(self.video_path,"model/best.onnx","model/best.engine","output/output.mp4",0.25)
         video_processor.process_video()
 
-
+        self.processed_video_path = "output/output.mp4"
         #self.metrics_text.append(f"Vidéo traitée disponible : {self.processed_video_path}")
 
         
     def play_video(self):
-        video_to_play = self.video_path if self.show_original.isChecked() else self.processed_video_path
+        video_to_play = self.processed_video_path if self.show_original.isChecked() else self.video_path 
         if not video_to_play:
             self.metrics_text.append("Aucune vidéo disponible !")
             return
         
         threading.Thread(target=self.display_video, args=(video_to_play, self.video_label)).start()
+        threading.Thread(target=self.display_video, args=(self.video_path, self.original_video_label)).start()
     
     def display_video(self, path, label):
         cap = cv2.VideoCapture(path)
