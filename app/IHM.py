@@ -32,7 +32,7 @@ class VideoProcessingApp(QWidget):
         left_layout.addWidget(self.upload_btn)
         
         # Metrics display
-        self.metrics_label = QLabel("📊 Métriques :")
+        self.metrics_label = QLabel("Logs:")
         left_layout.addWidget(self.metrics_label)
         self.metrics_text = QTextEdit()
         self.metrics_text.setReadOnly(True)
@@ -102,7 +102,7 @@ class VideoProcessingApp(QWidget):
         video_processor.process_video()
 
         self.processed_video_path = "output/output.mp4"
-        #self.metrics_text.append(f"Vidéo traitée disponible : {self.processed_video_path}")
+        self.metrics_text.append(f"Vidéo traitée disponible : {self.processed_video_path}")
 
         
     def play_video(self):
